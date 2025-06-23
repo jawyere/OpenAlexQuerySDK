@@ -2,6 +2,8 @@ import ollama
 import subprocess
 import json
 import pandas as pd
+import requests
+
 
 """
 Parameters:
@@ -19,6 +21,13 @@ def getCallString(*args, **kwargs):
     fullTextKeys, AbstractAndTitleKeys = parseTupletuple(args)
     from_year = kwargs.get("from_year", 2019)
 
+    
+    callString = listsToString(AbstractAndTitleKeys, fullTextKeys, from_year)
+
+    return callString
+   
+
+def getFileName(fullTextKeys, AbstractAndTitleKeys):
     full_text_string = ""
     abs_title_string = ""
 
@@ -38,13 +47,9 @@ def getCallString(*args, **kwargs):
     #F: words/phrases in full text
     #AT: words/phrases in abstract or title
     name = f"F:{full_text_string}|AT:{abs_title_string}|p1"
-    callString = listsToString(AbstractAndTitleKeys, fullTextKeys, from_year)
-    path = f"/home/jwagner/Projects/PracticeProjects/data/inputData/{name}.json"
+    path = f"/home/jwagner/Projects/OpenAlexQuerySDK/data/inputData/{name}.json"
 
-    return (path, callString)
-   
-    #subprocess.run(["curl", callString, "-o", path])
-
+    return path
 
 def parseTupletuple(tuple):
     n = len(tuple)
@@ -113,14 +118,14 @@ def listsToString(abs_title_list, full_text_list, year):
         raise ValueError("no search parameters given")
     
     if not filterString:
-        string = f"https://api.openalex.org/works?search={searchString}&filter=publication_year:>{year}&per_page=200"
+        string = f"https://api.openalex.org/works?search={searchString}&filter=publication_year:>{year}&per_page=200&page=1"
 
     if not searchString:
-        string = f"https://api.openalex.org/works?filter=title_and_abstract.search:{filterString},publication_year:>{year}&per_page=200"
+        string = f"https://api.openalex.org/works?filter=title_and_abstract.search:{filterString},publication_year:>{year}&per_page=200&page=1"
 
     #has a search and filter string
     else:
-        string = f"https://api.openalex.org/works?search={searchString}&filter=title_and_abstract.search:{filterString},publication_year:>{year}&per_page=200"
+        string = f"https://api.openalex.org/works?search={searchString}&filter=title_and_abstract.search:{filterString},publication_year:>{year}&per_page=200&page=1"
     
     return string
 
@@ -128,34 +133,55 @@ def listsToString(abs_title_list, full_text_list, year):
 """
 checks if the new page added to inputData is the last one. Adds all to dataframe. stores pandas df in input
 Creates pandas dataframe of all pages
+
+I need to choose to have this take an apicallstirng or json file. I htink i will od api call stirng
 """
-def toDataFrame(filePath):
+def getDataFrame(callString):
 
-    #create df from file json
-    with open(filePath) as dataFile:
-        data = json.load(dataFile)
+    dataFrames = []
 
+    #initial variables before loop
+    total_count = 1
+    page_num = 0
+    per_page = 200
+
+    #add next page to df if not last page
+    while(total_count > page_num * per_page):
+        page_num += 1
+        print(page_num)
+        #get api data
+        response = requests.get(callString)
+        data = response.json()
+
+        #create df from file json and get needed metadata
         total_count = data.get("meta")["count"]
         page_num = data.get("meta")["page"]
         per_page = data.get("meta")["per_page"]
-
         results = data.get("results", [])
-        df = pd.DataFrame(results)
+        
+        
+        temp_df = pd.DataFrame(results)
+        dataFrames.append(temp_df)
+
+
+        #update call string to point to next page and update page_num for while loop condition
+        callString = callString.replace(f"&page={page_num}", f"&page={page_num+1}")
+        
     
 
-    #add next page to df if not last page
-    if(total_count > page_num * per_page):
-        pass
+
+    allPageDataFrame = pd.concat(dataFrames, ignore_index=True)
+    return allPageDataFrame
 
     
+#/home/jwagner/Projects/OpenAlexQuerySDK/data/inputData
 
-    
-#/home/jwagner/Projects/PracticeProjects/data/inputData
-
-
+#'/home/jwagner/Projects/OpenAlexQuerySDK/data/inputData/F:|AT:simulated_bifurcation|p1.json'
 
 
 
-a = getCallString("digital annealer")
+a = getCallString("simulated", "bifurcation")
+print(a)
+getDataFrame(a)
 
-toDataFrame('/home/jwagner/Projects/PracticeProjects/data/inputData/F:|AT:digital%20annealer|p1.json')
+
