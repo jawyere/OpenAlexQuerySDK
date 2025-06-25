@@ -3,7 +3,7 @@ import subprocess
 import json
 import pandas as pd
 import requests
-
+prompt = "Is this title directly related to optimization, especially algorithmic. Respond with \"yes\" or \"no\" after explanation"
 
 """
 Parameters:
@@ -148,7 +148,7 @@ def getDataFrame(callString):
     #add next page to df if not last page
     while(total_count > page_num * per_page):
         page_num += 1
-        print(page_num)
+        
         #get api data
         response = requests.get(callString)
         data = response.json()
@@ -171,17 +171,99 @@ def getDataFrame(callString):
 
 
     allPageDataFrame = pd.concat(dataFrames, ignore_index=True)
+
     return allPageDataFrame
 
+#uses ollama LLM to create new hasRelatedTitle key to the dataFrame    
+def addRelatedTitleKey(df):
+
+    titleSeries = df.get("title")
+    print(titleSeries)
+
     
+
+#removes papers without titles
+def cleanTitleData(df):
+
+    #remove none or empty titles for llm prep
+    df = df[df["title"].notna() & (df["title"] != "")]
+
+   
+def add_has_related_titles(df, prompt):
+    lis = []
+    
+    total_titles = df.shape[0]
+    print(total_titles)
+    
+    titles = df["title"]
+    x = 0
+    titleString = ""
+    for title in titles:
+        
+        response = ollama.chat(model='mistral', messages=[
+        {
+            'role': 'user',
+            'content': f"""{prompt}
+
+            {title}
+            """,
+    },
+    ])
+        print(title, "\n", response['message']['content'], "\n\n")
+        #if start with yes, true. otherwise false
+        if(response['message']['content'].strip().lower()[:3] == "yes"):
+            lis.append(True)
+        else:
+            lis.append(False)
+        x+=1
+        print(x)
+      
+        num_true = sum(1 for x in lis if x is True)
+
+        related_ratio = num_true / total_titles
+
+        print(related_ratio)
+
+
+
+
+    df.insert(3, "has_related_title", lis)
+    return
+
+
+
+
+
+
+def saveDataFrame(df, saveName):
+
+    saveName = "/home/jwagner/Projects/OpenAlexQuerySDK/data/dataFrame/" + saveName + ".pkl.gz"
+    df.to_pickle(saveName, compression = "gzip")
+
+
 #/home/jwagner/Projects/OpenAlexQuerySDK/data/inputData
 
 #'/home/jwagner/Projects/OpenAlexQuerySDK/data/inputData/F:|AT:simulated_bifurcation|p1.json'
 
 
+prompt = "Is this title directly related to optimization, especially algorithmic. Respond with \"yes\" or \"no\" after explanation"
 
-a = getCallString("simulated", "bifurcation")
-print(a)
-getDataFrame(a)
+pd.set_option("display.max_rows", None)
+a = getCallString("digital annealer")
+
+b = getDataFrame(a)
+
+
+cleanTitleData(b)
+
+
+
+add_has_related_titles(b, prompt)
+
+saveDataFrame(b, "df3:\"digital annealer\"")
+
+# hi = pd.read_pickle('df2:"simulated bifurcation".pkl.gz')
+# print(hi.iloc[:,3])
+
 
 
