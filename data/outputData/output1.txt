@@ -1,0 +1,41 @@
+Relevant Data: (number papers, mean relevance score, std of relevance score, % papers related to prompt(optimization related))
+
+Query File Name: q-digital%20annealer-.pkl
+Relevant Data: (150, 11.123000015466667, 21.12577648555856, 96.66666666666667)
+
+Query File Name: q-quantum%20annealer-.pkl
+Relevant Data: (2542, 18.942911789193552, 28.064485117964868, 86.66666666666667)
+
+Query File Name: q-simulated%20bifurcation-.pkl
+Relevant Data: (72, 16.584291705277778, 27.681402437115214, 96.66666666666667)
+
+Query File Name: q-simulated%20bifurcation%20machine-.pkl
+Relevant Data: (13, 11.896252939230767, 16.180355054070375, 100.0)
+
+Query File Name: q-simulated%20quantum%20annealing-.pkl
+Relevant Data: (39, 29.872862693846155, 39.676961196926406, 100.0)
+
+Query File Name: q-toshiba_simulated%20bifurcation-.pkl
+Relevant Data: (2, 12.425110799999999, 10.029581653989267, 100.0)
+
+Query File Name: q-toshiba_sbm-.pkl
+Relevant Data: (1, 19.416197, nan, 100.0)
+
+Query File Name: q-toshiba_sqbm-.pkl
+Relevant Data: (None, None, None, None)
+
+Query File Name: q-fujitsu_digital%20annealer-.pkl
+Relevant Data: (43, 7.163407442790699, 9.75007998040178, 100.0)
+
+Query File Name: q-fujitsu-.pkl
+Relevant Data: (267, 5.640090042247191, 12.592266551140456, 33.33333333333333)
+
+Query File Name: q-toshiba-.pkl
+Relevant Data: (754, 2.1325634558541116, 3.9489767751805553, 13.333333333333334)
+
+Query File Name: q-d-wave-.pkl
+Relevant Data: (2528, 5.078586188785601, 11.231713112250512, 63.33333333333333)
+
+Query File Name: q-d-wave_quantum%20annealer-.pkl
+Relevant Data: (690, 13.125359264507248, 31.895848228757004, 96.66666666666667)
+

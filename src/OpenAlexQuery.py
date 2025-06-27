@@ -2,25 +2,34 @@ import pandas as pd
 import requests
 import ollama
 import pickle
+import os
 
 
 
 class OpenAlexQuery:
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, tuple, **kwargs):
         #get API call string from input keywords
-        self.fullTextKeys, self.AbstractAndTitleKeys = self.parseTupletuple(args)
+        self.fullTextKeys, self.AbstractAndTitleKeys = self.parseTupletuple(tuple)
+        self.dataFilePath = kwargs.get("data_path", "./data/queries")
         self.from_year = kwargs.get("from_year", 2019)
-        self.callString = self.listsToString(self.AbstractAndTitleKeys, self.fullTextKeys, self.from_year)
+        self.callString = self.listsToCallString(self.AbstractAndTitleKeys, self.fullTextKeys, self.from_year)
         self.df = None
+        self.percentRelated = None
 
         #Quantitative Metadata
 
 
 
-#consider making percent related intended private
-    def getPercentRelated(self):
-        return self.percentRelated
+    def getMyMetaData(self):
+        if(self.df.empty):
+            print("dataFrame was not created yet")
+            return (None, None, None, None)
+#         print(f"""\nNumber of papers: {len(self.df)}
+# Average Relevance Score: {round(float(self.df["relevance_score"].describe()["mean"]),2)}
+# STD of Relevance Score: {round(float(self.df["relevance_score"].describe()["std"]),2)}
+# Percent Related: {round(self.percentRelated,2)}""")
+        return (len(self.df), float(self.df["relevance_score"].describe()["mean"]), float(self.df["relevance_score"].describe()["std"]) ,self.percentRelated)
 
     def getAPIQueryString(self):
         return self.callString
@@ -65,7 +74,8 @@ class OpenAlexQuery:
     def addRelatedTitlesBool(self, LLM_prompt, n=None):
 
         if(self.df.empty):
-            raise ValueError("dataFrame was not created yet")
+            print("dataFrame was not created yet")
+            return
         
         print(f"Adding key for first {min(n,len(self.df))} papers in dataframe")
         
@@ -104,7 +114,13 @@ class OpenAlexQuery:
     #update this for other popular keys
     def cleanDataFrame(self):
         #remove none or empty titles for llm prep
+        if(self.df.empty):
+            print("dataFrame was not created yet")
+            return
+                
+     
         self.df = self.df[self.df["title"].notna() & (self.df["title"] != "")]
+
 
     def describeQuantitativeData(self):
 
@@ -152,14 +168,19 @@ class OpenAlexQuery:
     def PlotQuantitativeInfo(self):
         pass
 
-    def saveQuery(self, saveName):
+    def saveQuery(self, saveName = None):
 
-        filePath = "/home/jwagner/Projects/OpenAlexQuerySDK/data/queries/" + saveName 
+        if saveName is None:
+            saveName = self.fileName
+        
+        
+        dir_path = "/home/jwagner/Projects/OpenAlexQuerySDK/data/queries/"
+        filePath = os.path.join(dir_path, saveName) 
+        
         with open(filePath, "wb") as f:
             pickle.dump(self, f)
 
     def process(self, prompt):
-
         self.createDataFrame()
         self.cleanDataFrame()
         self.addRelatedTitlesBool(prompt)
@@ -205,12 +226,31 @@ class OpenAlexQuery:
                 lisFull_Text.append(label)
 
             i += 1
-        
+            
+       
+        self.storeFileName(lisAbs_Title,lisFull_Text)
 
         return (lisFull_Text, lisAbs_Title)
     
-    def listsToString(self, abs_title_list, full_text_list, year):
+    def storeFileName(self, abs_title_list, full_text_list):
+        full_text_string = ""
+        abs_title_string = ""
 
+        for i,phrase in enumerate(full_text_list):
+            full_text_string += phrase + "_"
+
+            if (i != len(full_text_list) - 1):
+                full_text_string += "_"
+
+        for i,phrase in enumerate(abs_title_list):
+            abs_title_string += phrase 
+
+            if (i != len(abs_title_list) - 1):
+                abs_title_string += "_"
+
+        self.fileName = "q-" + abs_title_string + "-"  + full_text_string + ".pkl"
+
+    def listsToCallString(self, abs_title_list, full_text_list, year):
         searchString = ""
         for i, phrase in enumerate(full_text_list):
             if i == len(full_text_list) - 1:
@@ -244,6 +284,13 @@ class OpenAlexQuery:
         
         return string
     
+    def toOutputFile(self, fileName):
+        
+        output_path = f"/home/jwagner/Projects/OpenAlexQuerySDK/data/outputData/{fileName}"
+        with open(output_path, "a") as file:
+
+            file.write(f"Query File Name: {self.fileName}\nRelevant Data: {self.getMyMetaData()}\n\n")
+                    
     @staticmethod
     def loadQuery(fileName):
         
@@ -260,6 +307,8 @@ if __name__ == "__main__":
     pd.set_option("display.width", 150)
     pd.set_option("display.max_rows", None)
     pd.set_option("display.max_columns", None)
+    pd.set_option("display.max_colwidth", None)  
+ 
     
     prompt = "Is this title directly related to optimization, especially algorithmic or combinatorial. Respond with \"yes\" or \"no\" after explanation"
 
@@ -270,21 +319,43 @@ if __name__ == "__main__":
     # query1.addRelatedTitlesBool(prompt, 13)
     # query1.saveQuery("q2:'simulated bifurcation machine'.pkl")
 
-
-
-    pd.set_option("display.max_colwidth", None)  
-    pd.set_option("display.max_rows", None)
-
-
-    
-    query1 = OpenAlexQuery.loadQuery("q2:'simulated bifurcation machine'.pkl")
-
+    # query1 = OpenAlexQuery.loadQuery("q2:'simulated bifurcation machine'.pkl")
     # q1.describeMissingData()
-
-    query1.describeQuantitativeData()
+    # query1.describeQuantitativeData()
     # print(q1.df)
 
 
+    #list of tuples to input and get data from
+
+
+   
+
+    inputList = [("digital annealer",),
+     ("quantum annealer",),
+     ("simulated bifurcation",),
+     ("simulated bifurcation machine",),
+     ("simulated quantum annealing",),
+     ("toshiba", "simulated bifurcation",),
+     ("toshiba", "sbm",),
+     ("toshiba", "sqbm",),
+     ("fujitsu", "digital annealer",),
+     ("fujitsu",),
+     ("toshiba",),
+     ("d-wave",),
+     ("d-wave", "quantum annealer")]  
+
+    
+
+    for name in inputList:
+         q1 = OpenAlexQuery(name)
+         q1.createDataFrame()
+         q1.cleanDataFrame()
+         q1.addRelatedTitlesBool(prompt, 30)
+         q1.saveQuery()
+         q1.getMyMetaData()
+         q1.toOutputFile("output1.txt")
+
+   
 
 
 

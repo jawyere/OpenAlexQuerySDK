@@ -1,9 +1,0 @@
-title,id,pub_date,cited_by_count,referenced_works_count
-"Benchmark of quantum-inspired heuristic solvers for quadratic unconstrained binary optimization",https://openalex.org/W3159402472,2022-02-09,44,32
-"3-regular three-XORSAT planted solutions benchmark of classical and quantum heuristic optimizers",https://openalex.org/W3135923901,2022-01-19,36,101
-"QUBO.jl: A Julia Ecosystem for Quadratic Unconstrained Binary Optimization",https://openalex.org/W4383604367,2023-01-01,6,0
-"Scaling overhead of locality reduction in binary optimization problems",https://openalex.org/W3112652870,2020-12-17,2,0
-"Improved Sparse Ising Optimization",https://openalex.org/W4388787358,2023-01-01,0,0
-"Image Denoising Using Simulated Bifurcation Based Ising Machine",https://openalex.org/W4410530728,2025-05-20,0,0
-"Accuracy and Performance Evaluation of Quantum, Classical and Hybrid
-  Solvers for the Max-Cut Problem",https://openalex.org/W4405263039,2024-12-10,0,0
